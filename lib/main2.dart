@@ -1,19 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:barcode_scan2/barcode_scan2.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart'; // Import flutter_local_notifications package
 import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'dart:convert';
-import 'dart:io';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
-import 'login_page.dart';
-import 'register_page.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
@@ -30,14 +27,6 @@ final initializationSettingsIOS = IOSInitializationSettings(
   onDidReceiveLocalNotification:
       (int id, String? title, String? body, String? payload) async {},
 );
-
-IOSInitializationSettings(
-    {required bool requestAlertPermission,
-    required bool requestBadgePermission,
-    required bool requestSoundPermission,
-    required Future<Null> Function(
-            int id, String? title, String? body, String? payload)
-        onDidReceiveLocalNotification}) {}
 
 final initializationSettings = InitializationSettings(
   android: initializationSettingsAndroid,
@@ -84,8 +73,6 @@ Future<void> scheduleNotification(
             UILocalNotificationDateInterpretation.absoluteTime);
   }
 }
-
-IOSNotificationDetails() {}
 
 class MyApp extends StatelessWidget {
   @override
@@ -138,8 +125,9 @@ class HomePage extends StatelessWidget {
             SizedBox(height: 30),
             ElevatedButton(
               onPressed: () async {
-                // Scan expiry date
-                DateTime? expiryDate = await scanExpiryDate();
+                // Make onPressed callback asynchronous
+                DateTime? expiryDate =
+                    await scanExpiryDate(); // Await the result
                 print('Scanned expiry date: $expiryDate');
               },
               child: Text('Scan Expiry Date'),
@@ -147,8 +135,8 @@ class HomePage extends StatelessWidget {
             SizedBox(height: 30),
             ElevatedButton(
               onPressed: () async {
-                // Scan barcode
-                String barcode = await scanBarcode();
+                // Make onPressed callback asynchronous
+                String barcode = await scanBarcode(); // Await the result
                 print('Scanned barcode: $barcode');
               },
               child: Text('Scan Barcode'),
@@ -241,7 +229,6 @@ class _AddFoodItemScreenState extends State<AddFoodItemScreen> {
             ),
             ElevatedButton(
               onPressed: () async {
-                // Scan expiry date
                 DateTime? date = await scanExpiryDate();
                 setState(() {
                   expiryDate = date;
@@ -251,7 +238,6 @@ class _AddFoodItemScreenState extends State<AddFoodItemScreen> {
             ),
             ElevatedButton(
               onPressed: () async {
-                // Add food item
                 FoodItem foodItem = FoodItem(
                   category: selectedCategory!,
                   name: name,
@@ -275,7 +261,7 @@ class _AddFoodItemScreenState extends State<AddFoodItemScreen> {
 Future<String> scanBarcode() async {
   try {
     var result = await BarcodeScanner.scan();
-    return result.rawContent ?? 'Scan failed';
+    return result.rawContent;
   } on PlatformException catch (e) {
     if (e.code == BarcodeScanner.cameraAccessDenied) {
       return 'The user did not grant the camera permission!';
@@ -294,57 +280,19 @@ Future<DateTime?> scanExpiryDate() async {
   return DateTime.now().add(Duration(days: 7));
 }
 
-class LocalFoodBanksPage extends StatefulWidget {
-  @override
-  _LocalFoodBanksPageState createState() => _LocalFoodBanksPageState();
-}
-
-class _LocalFoodBanksPageState extends State<LocalFoodBanksPage> {
-  List<Map<String, dynamic>> foodBanks = [];
-
-  @override
-  void initState() {
-    super.initState();
-    fetchFoodBanks();
-  }
-
-  Future<void> fetchFoodBanks() async {
-    Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high);
-    // Use your actual API key for Google Maps Geocoding API
-    final apiKey =
-        "https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initMap";
-    final url =
-        'https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${position.latitude},${position.longitude}&radius=5000&type=food_bank&key=$apiKey';
-
-    var http;
-    final response = await http.get(Uri.parse(url));
-    final data = json.decode(response.body);
-
-    setState(() {
-      foodBanks = (data['results'] as List)
-          .map((result) => {
-                'name': result['name'],
-                'address': result['vicinity'],
-              })
-          .toList();
-    });
-  }
-
+class LocalFoodBanksPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text('Local Food Banks'),
       ),
-      body: ListView.builder(
-        itemCount: foodBanks.length,
-        itemBuilder: (context, index) {
-          return ListTile(
-            title: Text(foodBanks[index]['name']),
-            subtitle: Text(foodBanks[index]['address']),
-          );
-        },
+      body: Center(
+        child: Column(
+          children: [
+            // Add your child widgets here
+          ],
+        ),
       ),
     );
   }
@@ -361,9 +309,26 @@ class InformativeTipsPage extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text('Tip 1: Store food properly to extend its shelf life.'),
-            Text('Tip 2: Plan your meals to avoid buying excess food.'),
-            Text('Tip 3: Donate unused food to local food banks.'),
+            Text(
+              'Reduce Food Waste',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 20),
+            Text(
+              '1. Plan your meals ahead of time.\n'
+              '2. Store food correctly.\n'
+              '3. Understand expiration dates.\n'
+              '4. Use leftovers creatively.',
+              style: TextStyle(fontSize: 16),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: Text('Back'),
+            ),
           ],
         ),
       ),
@@ -383,24 +348,161 @@ class FoodItem {
     required this.quantity,
     this.expiryDate,
   });
+
+  Map<String, dynamic> toMap() {
+    return {
+      'category': category,
+      'name': name,
+      'quantity': quantity,
+      'expiryDate': expiryDate?.millisecondsSinceEpoch,
+    };
+  }
+
+  static FoodItem fromMap(Map<String, dynamic> map) {
+    return FoodItem(
+      category: map['category'],
+      name: map['name'],
+      quantity: map['quantity'],
+      expiryDate: map['expiryDate'] != null
+          ? DateTime.fromMillisecondsSinceEpoch(map['expiryDate'])
+          : null,
+    );
+  }
 }
 
-class FoodItemProvider extends ChangeNotifier {
-  final List<FoodItem> _foodItems = [];
+class FoodItemProvider with ChangeNotifier {
+  final CollectionReference collection =
+      FirebaseFirestore.instance.collection('food_items');
 
-  List<FoodItem> get foodItems => _foodItems;
+  Future<void> addFoodItem(FoodItem item) {
+    return collection.add(item.toMap());
+  }
 
-  Future<void> addFoodItem(FoodItem foodItem) async {
-    _foodItems.add(foodItem);
-    notifyListeners();
-    if (foodItem.expiryDate != null) {
-      await scheduleNotification(foodItem, Duration(days: 1));
-    }
-    FirebaseFirestore.instance.collection('foodItems').add({
-      'category': foodItem.category,
-      'name': foodItem.name,
-      'quantity': foodItem.quantity,
-      'expiryDate': foodItem.expiryDate?.millisecondsSinceEpoch,
+  Stream<List<FoodItem>> getFoodItems() {
+    return collection.snapshots().map((snapshot) {
+      return snapshot.docs.map((doc) {
+        return FoodItem.fromMap(doc.data() as Map<String, dynamic>);
+      }).toList();
     });
+  }
+}
+
+class LoginPage extends StatefulWidget {
+  @override
+  _LoginPageState createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  Future<void> _login() async {
+    try {
+      await _auth.signInWithEmailAndPassword(
+        email: _emailController.text,
+        password: _passwordController.text,
+      );
+      Navigator.pushReplacementNamed(context, '/');
+    } catch (e) {
+      print(e);
+      // Handle error
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Login'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            TextField(
+              controller: _emailController,
+              decoration: InputDecoration(labelText: 'Email'),
+            ),
+            TextField(
+              controller: _passwordController,
+              decoration: InputDecoration(labelText: 'Password'),
+              obscureText: true,
+            ),
+            SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _login,
+              child: Text('Login'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pushNamed(context, '/register');
+              },
+              child: Text('Register'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class RegisterPage extends StatefulWidget {
+  @override
+  _RegisterPageState createState() => _RegisterPageState();
+}
+
+class _RegisterPageState extends State<RegisterPage> {
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+
+  Future<void> _register() async {
+    try {
+      await _auth.createUserWithEmailAndPassword(
+        email: _emailController.text,
+        password: _passwordController.text,
+      );
+      Navigator.pushReplacementNamed(context, '/');
+    } catch (e) {
+      print(e);
+      // Handle error
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Register'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            TextField(
+              controller: _emailController,
+              decoration: InputDecoration(labelText: 'Email'),
+            ),
+            TextField(
+              controller: _passwordController,
+              decoration: InputDecoration(labelText: 'Password'),
+              obscureText: true,
+            ),
+            SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _register,
+              child: Text('Register'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pushNamed(context, '/login');
+              },
+              child: Text('Login'),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
