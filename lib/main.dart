@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:barcode_scan2/barcode_scan2.dart';
+import 'package:barcode_scan2/barcode_scan2.dart'; //
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:geolocator/geolocator.dart';
@@ -18,12 +18,11 @@ import 'login_page.dart';
 import 'register_page.dart';
 import 'package:firebase_core/firebase_core.dart';
 
-
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-FlutterLocalNotificationsPlugin();
+    FlutterLocalNotificationsPlugin();
 
 final initializationSettingsAndroid =
-AndroidInitializationSettings('@mipmap/ic_launcher');
+    AndroidInitializationSettings('@mipmap/ic_launcher');
 
 final initializationSettingsIOS = IOSInitializationSettings(
     requestAlertPermission: false,
@@ -47,18 +46,15 @@ void main() async {
   );
 }
 
-Future<void> scheduleNotification(FoodItem item, Duration preExpiryPeriod) async {
+Future<void> scheduleNotification(
+    FoodItem item, Duration preExpiryPeriod) async {
   if (item.expiryDate != null) {
     var scheduledNotificationDateTime =
-    item.expiryDate!.subtract(preExpiryPeriod);
+        item.expiryDate!.subtract(preExpiryPeriod);
 
     var androidPlatformChannelSpecifics = AndroidNotificationDetails(
-        'your channel id',
-        'your channel name',
-        importance: Importance.max,
-        priority: Priority.high,
-        showWhen: false
-    );
+        'your channel id', 'your channel name',
+        importance: Importance.max, priority: Priority.high, showWhen: false);
 
     var iOSPlatformChannelSpecifics = IOSNotificationDetails();
 
@@ -74,7 +70,6 @@ Future<void> scheduleNotification(FoodItem item, Duration preExpiryPeriod) async
         platformChannelSpecifics);
   }
 }
-
 
 class MyApp extends StatelessWidget {
   @override
@@ -110,7 +105,6 @@ class HomePage extends StatelessWidget {
             bottom: Radius.circular(30),
           ),
         ),
-
         title: Text('Food Waste App'),
       ),
       body: Center(
@@ -124,9 +118,7 @@ class HomePage extends StatelessWidget {
                   MaterialPageRoute(builder: (context) => AddFoodItemScreen()),
                 );
               },
-
               child: Text('Add Food Item'),
-
             ),
             SizedBox(height: 30),
             ElevatedButton(
@@ -157,12 +149,12 @@ class HomePage extends StatelessWidget {
               child: Text('Local Food Banks'),
             ),
             SizedBox(height: 30),
-
             ElevatedButton(
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => InformativeTipsPage()),
+                  MaterialPageRoute(
+                      builder: (context) => InformativeTipsPage()),
                 );
               },
               child: Text('Informative Tips'),
@@ -178,11 +170,11 @@ class AddFoodItemScreen extends StatefulWidget {
   @override
   _AddFoodItemScreenState createState() => _AddFoodItemScreenState();
 }
+
 class LocalFoodBanksPage extends StatefulWidget {
   @override
   _LocalFoodBanksPageState createState() => _LocalFoodBanksPageState();
 }
-
 
 class _LocalFoodBanksPageState extends State<LocalFoodBanksPage> {
   Position? currentPosition;
@@ -195,7 +187,8 @@ class _LocalFoodBanksPageState extends State<LocalFoodBanksPage> {
   }
 
   void _getNearbyFoodBanks() async {
-    Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+    Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high);
     currentPosition = position;
 
     List<FoodBank> foodBanks = [
@@ -216,7 +209,8 @@ class _LocalFoodBanksPageState extends State<LocalFoodBanksPage> {
         Marker(
           markerId: MarkerId(foodBank.name),
           position: LatLng(foodBank.latitude, foodBank.longitude),
-          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
+          icon:
+              BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
         ),
       );
     });
@@ -233,12 +227,13 @@ class _LocalFoodBanksPageState extends State<LocalFoodBanksPage> {
       body: (currentPosition == null)
           ? Center(child: CircularProgressIndicator())
           : GoogleMap(
-        initialCameraPosition: CameraPosition(
-          target: LatLng(currentPosition!.latitude, currentPosition!.longitude),
-          zoom: 13.0,
-        ),
-        markers: markers,
-      ),
+              initialCameraPosition: CameraPosition(
+                target: LatLng(
+                    currentPosition!.latitude, currentPosition!.longitude),
+                zoom: 13.0,
+              ),
+              markers: markers,
+            ),
     );
   }
 }
@@ -255,14 +250,20 @@ class FoodBank {
   });
 }
 
-
 class _AddFoodItemScreenState extends State<AddFoodItemScreen> {
   String? selectedCategory;
   String name = '';
   double quantity = 0.0;
   DateTime? expiryDate;
 
-  List<String> categories = ['Fruit', 'Vegetable', 'Meat', 'Dairy', 'Grain', 'Other'];
+  List<String> categories = [
+    'Fruit',
+    'Vegetable',
+    'Meat',
+    'Dairy',
+    'Grain',
+    'Other'
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -351,21 +352,19 @@ class _AddFoodItemScreenState extends State<AddFoodItemScreen> {
     );
   }
 
-  void _addFoodItem(String? category, String name, double quantity, DateTime? expiryDate) {
+  void _addFoodItem(
+      String? category, String name, double quantity, DateTime? expiryDate) {
     FoodItem newItem = FoodItem(
       category: category,
       name: name,
       quantity: quantity,
       expiryDate: expiryDate,
-
     );
 
     Provider.of<FoodItemProvider>(context, listen: false).addItem(newItem);
     scheduleNotification(newItem, Duration(days: 3));
 
     Navigator.pop(context);
-
-
   }
 }
 
@@ -384,7 +383,8 @@ class showfod extends StatelessWidget {
               FoodItem item = foodItemProvider.items[index];
               return ListTile(
                 title: Text(item.name),
-                subtitle: Text('Category: ${item.category}\nQuantity: ${item.quantity}\nExpiry Date: ${item.expiryDate}'),
+                subtitle: Text(
+                    'Category: ${item.category}\nQuantity: ${item.quantity}\nExpiry Date: ${item.expiryDate}'),
               );
             },
           );
@@ -435,7 +435,10 @@ class _InformativeTipsPageState extends State<InformativeTipsPage> {
 
     tips.removeWhere((tip) => tip.trim().isEmpty);
 
-    tips = tips.map((tip) => tip.replaceAllMapped(RegExp(r'\*\*(.*?)\*\*'), (match) => '${match.group(1)}')).toList();
+    tips = tips
+        .map((tip) => tip.replaceAllMapped(
+            RegExp(r'\*\*(.*?)\*\*'), (match) => '${match.group(1)}'))
+        .toList();
 
     print(tips);
 
@@ -459,14 +462,17 @@ class _InformativeTipsPageState extends State<InformativeTipsPage> {
               itemBuilder: (context, index) {
                 List<String> parts = snapshot.data![index].split(':');
                 String tip = parts[0].trim();
-                String description = parts.length > 1 ? parts.sublist(1).join(':').trim() : '';
+                String description =
+                    parts.length > 1 ? parts.sublist(1).join(':').trim() : '';
 
                 return ListTile(
                   title: Text('Tip ${index + 1}'),
                   subtitle: RichText(
                     text: TextSpan(
                       children: [
-                        TextSpan(text: tip, style: TextStyle(fontWeight: FontWeight.bold)),
+                        TextSpan(
+                            text: tip,
+                            style: TextStyle(fontWeight: FontWeight.bold)),
                         TextSpan(text: ': $description'),
                       ],
                       style: DefaultTextStyle.of(context).style,
@@ -506,6 +512,7 @@ Future<String> scanBarcode() async {
     return '';
   }
 }
+
 class FoodItem {
   final String? category;
   final String name;
@@ -519,6 +526,7 @@ class FoodItem {
     this.expiryDate,
   });
 }
+
 class FoodItemProvider with ChangeNotifier {
   List<FoodItem> _items = [];
 

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'auth_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class LoginPage extends StatefulWidget {
   @override
@@ -7,8 +7,7 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final AuthService _auth = AuthService();
-  final _formKey = GlobalKey<FormState>();
+  final _auth = FirebaseAuth.instance;
   String email = '';
   String password = '';
 
@@ -16,44 +15,49 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Sign in'),
+        title: Text('Login'),
       ),
-      body: Container(
-        padding: EdgeInsets.symmetric(vertical: 20.0, horizontal: 50.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: <Widget>[
-              SizedBox(height: 20.0),
-              TextFormField(
-                onChanged: (val) {
-                  setState(() => email = val);
-                },
-              ),
-              SizedBox(height: 20.0),
-              TextFormField(
-                obscureText: true,
-                onChanged: (val) {
-                  setState(() => password = val);
-                },
-              ),
-              SizedBox(height: 20.0),
-              ElevatedButton(
-                child: Text('Sign in'),
-                onPressed: () async {
-                  if (_formKey.currentState!.validate()) {
-                    dynamic result = await _auth.signInWithEmailAndPassword(email, password);
-                    if (result == null) {
-                      print('Could not sign in with those credentials');
-                    } else {
-                      print('Signed in');
-                      print(result.toString());
-                    }
-                  }
-                },
-              ),
-            ],
-          ),
+      body: Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            TextField(
+              decoration: InputDecoration(labelText: 'Email'),
+              onChanged: (value) {
+                setState(() {
+                  email = value;
+                });
+              },
+            ),
+            TextField(
+              decoration: InputDecoration(labelText: 'Password'),
+              obscureText: true,
+              onChanged: (value) {
+                setState(() {
+                  password = value;
+                });
+              },
+            ),
+            SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () async {
+                try {
+                  await _auth.signInWithEmailAndPassword(
+                      email: email, password: password);
+                  Navigator.pushReplacementNamed(context, '/');
+                } catch (e) {
+                  print(e);
+                }
+              },
+              child: Text('Login'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pushNamed(context, '/register');
+              },
+              child: Text('Don\'t have an account? Register'),
+            ),
+          ],
         ),
       ),
     );
