@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:barcode_scan2/barcode_scan2.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart'; // Import flutter_local_notifications package
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -13,65 +13,53 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
-
-final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
-    FlutterLocalNotificationsPlugin();
-
-final initializationSettingsAndroid =
-    AndroidInitializationSettings('@mipmap/ic_launcher');
-
-final initializationSettingsIOS = IOSInitializationSettings(
-  requestAlertPermission: false,
-  requestBadgePermission: false,
-  requestSoundPermission: false,
-  onDidReceiveLocalNotification:
-      (int id, String? title, String? body, String? payload) async {},
-);
-
-final initializationSettings = InitializationSettings(
-  android: initializationSettingsAndroid,
-  iOS: initializationSettingsIOS,
-);
+import 'firebase_options.dart'; // Import the generated file
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Firebase
+  const firebaseConfig = FirebaseOptions(
+    apiKey: "AIzaSyCXA0owapVZHufG_i4xWjY70aPK1dvFsTY",
+    authDomain: "food-wasteapp.firebaseapp.com",
+    projectId: "food-wasteapp",
+    storageBucket: "food-wasteapp.appspot.com",
+    messagingSenderId: "640878287658",
+    appId: "1:640878287658:web:772f3f0addb268d6aa1c53",
+  );
+
+  await Firebase.initializeApp(options: firebaseConfig);
+
+  // Initialize timezone data for local notifications
   tz.initializeTimeZones();
+
+  // Initialize local notifications
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
+  final initializationSettingsAndroid = AndroidInitializationSettings(
+      '@mipmap/ic_launcher'); // Set your android icon here
+  final initializationSettingsIOS = DarwinInitializationSettings(
+    requestAlertPermission: true,
+    requestBadgePermission: true,
+    requestSoundPermission: true,
+    onDidReceiveLocalNotification:
+        (int id, String? title, String? body, String? payload) async {
+      // Handle the received notification
+    },
+  );
+  final initializationSettings = InitializationSettings(
+    android: initializationSettingsAndroid,
+    iOS: initializationSettingsIOS,
+  );
+
   await flutterLocalNotificationsPlugin.initialize(initializationSettings);
-  await Firebase.initializeApp();
+
   runApp(
     ChangeNotifierProvider(
       create: (context) => FoodItemProvider(),
       child: MyApp(),
     ),
   );
-}
-
-Future<void> scheduleNotification(
-    FoodItem item, Duration preExpiryPeriod) async {
-  if (item.expiryDate != null) {
-    var scheduledNotificationDateTime =
-        item.expiryDate!.subtract(preExpiryPeriod);
-
-    var androidPlatformChannelSpecifics = AndroidNotificationDetails(
-        'your channel id', 'your channel name',
-        importance: Importance.max, priority: Priority.high, showWhen: false);
-
-    var iOSPlatformChannelSpecifics = IOSNotificationDetails();
-
-    var platformChannelSpecifics = NotificationDetails(
-        android: androidPlatformChannelSpecifics,
-        iOS: iOSPlatformChannelSpecifics);
-
-    await flutterLocalNotificationsPlugin.zonedSchedule(
-        item.hashCode,
-        'Expiry Reminder',
-        '${item.name} is expiring soon!',
-        tz.TZDateTime.from(scheduledNotificationDateTime, tz.local),
-        platformChannelSpecifics,
-        androidAllowWhileIdle: true,
-        uiLocalNotificationDateInterpretation:
-            UILocalNotificationDateInterpretation.absoluteTime);
-  }
 }
 
 class MyApp extends StatelessWidget {
@@ -125,9 +113,7 @@ class HomePage extends StatelessWidget {
             SizedBox(height: 30),
             ElevatedButton(
               onPressed: () async {
-                // Make onPressed callback asynchronous
-                DateTime? expiryDate =
-                    await scanExpiryDate(); // Await the result
+                DateTime? expiryDate = await scanExpiryDate();
                 print('Scanned expiry date: $expiryDate');
               },
               child: Text('Scan Expiry Date'),
@@ -135,8 +121,7 @@ class HomePage extends StatelessWidget {
             SizedBox(height: 30),
             ElevatedButton(
               onPressed: () async {
-                // Make onPressed callback asynchronous
-                String barcode = await scanBarcode(); // Await the result
+                String barcode = await scanBarcode();
                 print('Scanned barcode: $barcode');
               },
               child: Text('Scan Barcode'),
