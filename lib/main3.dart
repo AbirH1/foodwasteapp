@@ -13,7 +13,8 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
-import 'HomePage.dart'; // Import the generated file
+import 'package:intl/intl.dart';
+//import 'firebase_options.dart'; // Import the generated file
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -147,6 +148,16 @@ class HomePage extends StatelessWidget {
               },
               child: Text('Informative Tips'),
             ),
+            SizedBox(height: 30),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => FoodItemListScreen()),
+                );
+              },
+              child: Text('View Food Items'),
+            ),
           ],
         ),
       ),
@@ -164,7 +175,6 @@ class _AddFoodItemScreenState extends State<AddFoodItemScreen> {
   String name = '';
   double quantity = 0.0;
   DateTime? expiryDate;
-  DateTime? scannedDate;
 
   final List<String> categories = ['Fruit', 'Vegetable', 'Dairy', 'Meat'];
 
@@ -223,6 +233,13 @@ class _AddFoodItemScreenState extends State<AddFoodItemScreen> {
             ),
             ElevatedButton(
               onPressed: () async {
+                if (selectedCategory == null || name.isEmpty || quantity <= 0) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Please fill all fields')),
+                  );
+                  return;
+                }
+
                 FoodItem foodItem = FoodItem(
                   category: selectedCategory!,
                   name: name,
@@ -235,6 +252,16 @@ class _AddFoodItemScreenState extends State<AddFoodItemScreen> {
                 Navigator.pop(context);
               },
               child: Text('Add Food Item'),
+            ),
+            SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => FoodItemListScreen()),
+                );
+              },
+              child: Text('View Food Items'),
             ),
           ],
         ),
@@ -359,8 +386,14 @@ class FoodItemProvider with ChangeNotifier {
   final CollectionReference collection =
       FirebaseFirestore.instance.collection('food_items');
 
-  Future<void> addFoodItem(FoodItem item) {
-    return collection.add(item.toMap());
+  Future<void> addFoodItem(FoodItem item) async {
+    try {
+      await collection.add(item.toMap());
+      notifyListeners(); // Notify listeners after adding the item
+    } catch (e) {
+      print('Error adding food item: $e');
+      // You can also show an error message to the user using a SnackBar or similar
+    }
   }
 
   Stream<List<FoodItem>> getFoodItems() {
@@ -487,6 +520,45 @@ class _RegisterPageState extends State<RegisterPage> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class FoodItemListScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Food Item List'),
+      ),
+      body: StreamBuilder<List<FoodItem>>(
+        stream: Provider.of<FoodItemProvider>(context).getFoodItems(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return Center(child: Text('No food items found'));
+          } else {
+            final foodItems = snapshot.data!;
+            return ListView.builder(
+              itemCount: foodItems.length,
+              itemBuilder: (context, index) {
+                final item = foodItems[index];
+                final expiryDate = item.expiryDate != null
+                    ? DateFormat.yMMMd().format(item.expiryDate!)
+                    : 'N/A';
+                return ListTile(
+                  title: Text(item.name),
+                  subtitle: Text(
+                      'Category: ${item.category}, Quantity: ${item.quantity}, Expiry Date: $expiryDate'),
+                );
+              },
+            );
+          }
+        },
       ),
     );
   }
