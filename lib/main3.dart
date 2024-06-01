@@ -81,6 +81,8 @@ class MyApp extends StatelessWidget {
         '/home': (context) => HomePage(),
         '/addFoodItem': (context) => AddFoodItemScreen(),
         '/foodItemList': (context) => FoodItemListScreen(),
+        '/scheduleDelivery': (context) =>
+            ScheduleDeliveryScreen(), // Add this route
       },
       initialRoute: '/',
     );
@@ -489,6 +491,13 @@ class HomePage extends StatelessWidget {
               },
               child: Text('View Food Items'),
             ),
+            SizedBox(height: 30),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pushNamed(context, '/scheduleDelivery');
+              },
+              child: Text('Schedule Delivery'), // Add this button
+            ),
           ],
         ),
       ),
@@ -709,6 +718,97 @@ class FoodItem {
       expiryDate: map['expiryDate'] != null
           ? DateTime.fromMillisecondsSinceEpoch(map['expiryDate'])
           : null,
+    );
+  }
+}
+
+class ScheduleDeliveryScreen extends StatefulWidget {
+  @override
+  _ScheduleDeliveryScreenState createState() => _ScheduleDeliveryScreenState();
+}
+
+class _ScheduleDeliveryScreenState extends State<ScheduleDeliveryScreen> {
+  final TextEditingController _addressController = TextEditingController();
+  final TextEditingController _dateController = TextEditingController();
+  String? _selectedService;
+  final List<String> _deliveryServices = [
+    'Service A',
+    'Service B',
+    'Service C'
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Schedule Delivery'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            TextField(
+              controller: _addressController,
+              decoration: InputDecoration(labelText: 'Pickup Address'),
+            ),
+            TextField(
+              controller: _dateController,
+              decoration: InputDecoration(labelText: 'Pickup Date'),
+              onTap: () async {
+                DateTime? pickedDate = await showDatePicker(
+                  context: context,
+                  initialDate: DateTime.now(),
+                  firstDate: DateTime(2000),
+                  lastDate: DateTime(2101),
+                );
+                if (pickedDate != null) {
+                  _dateController.text =
+                      DateFormat('yyyy-MM-dd').format(pickedDate);
+                }
+              },
+            ),
+            DropdownButton<String>(
+              value: _selectedService,
+              hint: Text('Select Delivery Service'),
+              items: _deliveryServices.map((String service) {
+                return DropdownMenuItem<String>(
+                  value: service,
+                  child: Text(service),
+                );
+              }).toList(),
+              onChanged: (newValue) {
+                setState(() {
+                  _selectedService = newValue;
+                });
+              },
+            ),
+            SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: () {
+                if (_addressController.text.isNotEmpty &&
+                    _dateController.text.isNotEmpty &&
+                    _selectedService != null) {
+                  // Add to Firebase (mock)
+                  FirebaseFirestore.instance
+                      .collection('Schedule_delivery')
+                      .add({
+                    'address': _addressController.text,
+                    'date': _dateController.text,
+                    'service': _selectedService,
+                    'userId': FirebaseAuth.instance.currentUser?.uid,
+                  });
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Delivery scheduled successfully')),
+                  );
+                  Navigator.pop(context);
+                }
+              },
+              child: Text('Schedule Delivery'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
